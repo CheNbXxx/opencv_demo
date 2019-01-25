@@ -1,3 +1,5 @@
+import org.opencv.core.Mat;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -80,16 +82,23 @@ public class LoopChain<E> {
             } else {
                 tail.nextNode = new ChainNode<>(val, null);
                 tail = tail.nextNode;
+                if(head.nextNode == null){
+                    head.nextNode = tail;
+                }
             }
             return chainLength - ++size;
         } else if (size == chainLength - 1) {
             // 如果刚好等于chainLength-1时,需要在此时闭合链
             tail.nextNode = new ChainNode<>(val, head);
-            tail = head;
+            tail = tail.nextNode;
             size++;
             return 0;
         } else {
             // 链表中数目已经足够时,从head开始重新覆盖
+            // 释放Mat的内存
+            if(head.val instanceof Mat){
+                ((Mat) head.val).release();
+            }
             head.val = val;
             // 头尾节点都往下顺延
             // 其实此时tail已经没太大作用了
@@ -129,19 +138,43 @@ public class LoopChain<E> {
     }
 
     /**
-     * 清空环链
+     * 清空环链,释放mat空间
      */
     public void clear(){
+        if(head.val instanceof Mat){
+            ((Mat) head.val).release();
+        }
         head.val = null;
         head.nextNode =null;
         ChainNode t;
         while ((t = next(head)) != null){
+            if(t.val instanceof Mat){
+                ((Mat) t.val).release();
+            }
             t.val = null;
             t.nextNode = null;
         }
 
+        if(tail.val instanceof Mat){
+            ((Mat) tail.val).release();
+        }
         head = tail = null;
         size=0;
+    }
+
+
+    public static void main(String[] args) {
+        LoopChain<Integer> loopChain = new LoopChain<>(5);
+        loopChain.add(1);
+        loopChain.add(2);
+        loopChain.add(3);
+        loopChain.add(4);
+        loopChain.add(5);
+        loopChain.add(6);
+        loopChain.add(7);
+
+        List<Integer> integers = loopChain.valuesAsList();
+        System.out.println(integers.size());
     }
 
 }

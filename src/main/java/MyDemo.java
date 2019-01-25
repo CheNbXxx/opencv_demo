@@ -29,7 +29,8 @@ public class MyDemo {
 //        BackgroundSubtractor backgroundSubtractor = Video.createBackgroundSubtractorMOG2();
 
         // 指定视频并验证是否能打开
-        VideoCapture videoCapture = new VideoCapture("C:\\Users\\HuiShe\\Downloads\\street.mov");
+//        VideoCapture videoCapture = new VideoCapture("D:\\result-view-1.avi");
+        VideoCapture videoCapture = new VideoCapture("D:\\street.mov");
 //        VideoCapture videoCapture = new VideoCapture("D:\\Encode_1080P_4_7.mp4");
         try {
             if (!videoCapture.isOpened()) {
@@ -41,13 +42,21 @@ public class MyDemo {
             Mat modelFrame = null;
             Mat diff = new Mat();
             // 无限循环 取第一帧为辨别模板
+            double fps = videoCapture.get(Videoio.CAP_PROP_FPS);
+            Size frameSize = new Size(videoCapture.get(Videoio.CAP_PROP_FRAME_WIDTH), videoCapture.get(Videoio.CAP_PROP_FRAME_HEIGHT));
+            double frameCount = videoCapture.get(Videoio.CAP_PROP_FRAME_COUNT);
+            log.info("|| ==================   frameCount:[{}]",frameCount);
+            log.info("|| ==================   fps:[{}]",fps);
+            log.info("|| ==================   frameSize[ height:{},width:{}]",frameSize.height,frameSize.width);
             while (true) {
+                TimeUnit.SECONDS.sleep(1);
                 // 读取当前帧到frame
                 videoCapture.read(srcFrame);
                 if (srcFrame.empty()) {
                     log.info("未读取到帧");
                     break;
                 }
+
                 // 高斯滤波,尽量平滑，参数未知
                 Imgproc.GaussianBlur(srcFrame, currentFrame, new Size(9, 9), 3, 3);
                 if (modelFrame == null) {

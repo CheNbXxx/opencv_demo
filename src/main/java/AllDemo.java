@@ -6,6 +6,8 @@ import org.opencv.videoio.VideoCapture;
 import org.opencv.videoio.VideoWriter;
 import org.opencv.videoio.Videoio;
 
+import java.io.File;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -23,7 +25,7 @@ public class AllDemo {
 
     public static void main(String[] args) throws Exception {
 //        new AllDemo().handleVideo("D:\\\\Encode_1080P_4_7.mp4","D:\\Encode_1080P_4_7.mp4");
-        new AllDemo().handleVideo("C:\\Users\\HuiShe\\Downloads\\street.mov","D:\\Encode_1080P_4_7.mp4");
+        new AllDemo().handleVideo("D:\\Encode_1080P_4_7.mp4","D:");
     }
 
     static {
@@ -45,7 +47,7 @@ public class AllDemo {
         log.info("|| ==================   fps:[{}]",fps);
         log.info("|| ==================   frameSize[ height:{},width:{}]",frameSize.height,frameSize.width);
         VideoWriter videoWriter =
-                new VideoWriter(desDir+"result-view-"+outNum++ + ".avi",
+                new VideoWriter(desDir+"\\result-view-"+outNum++ + ".avi",
                         VideoWriter.fourcc('M','J','P','G'),
                         fps,
                         frameSize);
@@ -53,30 +55,32 @@ public class AllDemo {
         Mat modelFrame = null;
         boolean flag = false;
         int overFrameSize = 0;
-        int size = 50;
         while (true){
             // 原始帧
             Mat srcFrame = new Mat();
             // 处理后用于对比的帧
             Mat comparFrame = new Mat();
             videoCapture.read(srcFrame);
-            if(srcFrame.empty()){
+            if(srcFrame.empty()) {
+                log.info("|| ============= 视频解析完毕");
                 break;
-            }
-            // 循环50帧
-            while(size-- > 0){
-                videoCapture.grab();
             }
             // 先将Mat存在Cache中
             frame_cache.add(srcFrame);
             if(flag){
                 // 如果flag表示当前帧可以直接压入视频
                 videoWriter.write(srcFrame);
-                overFrameSize = overFrameSize == CACHE_FRAME_SIZE - 1 ? 0 : overFrameSize+1;
-                if(overFrameSize == CACHE_FRAME_SIZE){
+                log.info("{}帧压入视频",videoCapture.get(Videoio.CAP_PROP_POS_FRAMES));
+                overFrameSize = overFrameSize == CACHE_FRAME_SIZE - 1 ? 0 : (overFrameSize+1);
+                if(overFrameSize == 0){
                     flag = false;
-                    break;
+                    videoWriter.release();
+                    videoWriter = new VideoWriter(desDir+"\\result-view-"+outNum++ + ".avi",
+                            VideoWriter.fourcc('M','J','P','G'),
+                            fps,
+                            frameSize);
                 }
+                srcFrame.release();
                 continue;
             }
             // 高斯滤波,尽量平滑，参数未知
@@ -99,13 +103,20 @@ public class AllDemo {
             Core.meanStdDev(diffFrame, new MatOfDouble(), matOfDouble);
             // 取差值大于25的,触发录制
             if (matOfDouble.toArray()[0] > 25) {
+                List<Mat> mats = frame_cache.valuesAsList();
+                log.info("{}帧发现大于25的运动",videoCapture.get(Videoio.CAP_PROP_POS_FRAMES));
+                log.info("压入缓存中一共{}帧到视频",mats.size());
                 // 先将cache的压入视频,带上了当前帧
-                frame_cache.valuesAsList().forEach(videoWriter::write);
+                mats.forEach(videoWriter::write);
                 // 清空
                 frame_cache.clear();
                 flag = true;
             }
+            comparFrame.release();
+            diffFrame.release();
+            thresh.release();
         }
+        new File(desDir+"\\result-view-"+ (outNum-1) + ".avi").deleteOnExit();
         videoCapture.release();
         videoWriter.release();
     }
