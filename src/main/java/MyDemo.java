@@ -29,8 +29,8 @@ public class MyDemo {
 //        BackgroundSubtractor backgroundSubtractor = Video.createBackgroundSubtractorMOG2();
 
         // 指定视频并验证是否能打开
-//        VideoCapture videoCapture = new VideoCapture("C:\\Users\\HuiShe\\Downloads\\street.mov");
-        VideoCapture videoCapture = new VideoCapture("D:\\Encode_1080P_4_7.mp4");
+        VideoCapture videoCapture = new VideoCapture("C:\\Users\\HuiShe\\Downloads\\street.mov");
+//        VideoCapture videoCapture = new VideoCapture("D:\\Encode_1080P_4_7.mp4");
         try {
             if (!videoCapture.isOpened()) {
                 log.info("视频无法打开");
