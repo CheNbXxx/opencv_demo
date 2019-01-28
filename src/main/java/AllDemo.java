@@ -55,69 +55,79 @@ public class AllDemo {
         Mat modelFrame = null;
         boolean flag = false;
         int overFrameSize = 0;
-        while (true){
-            // 原始帧
-            Mat srcFrame = new Mat();
-            // 处理后用于对比的帧
-            Mat comparFrame = new Mat();
-            videoCapture.read(srcFrame);
-            if(srcFrame.empty()) {
-                log.info("|| ============= 视频解析完毕");
-                break;
-            }
-            // 先将Mat存在Cache中
-            frame_cache.add(srcFrame);
-            if(flag){
-                // 如果flag表示当前帧可以直接压入视频
-                videoWriter.write(srcFrame);
-                log.info("{}帧压入视频",videoCapture.get(Videoio.CAP_PROP_POS_FRAMES));
-                overFrameSize = overFrameSize == CACHE_FRAME_SIZE - 1 ? 0 : (overFrameSize+1);
-                if(overFrameSize == 0){
-                    flag = false;
-                    videoWriter.release();
-                    videoWriter = new VideoWriter(desDir+"\\result-view-"+outNum++ + ".avi",
-                            VideoWriter.fourcc('M','J','P','G'),
-                            fps,
-                            frameSize);
+        try {
+            while (true) {
+                log.info("读取到:{}帧", videoCapture.get(Videoio.CAP_PROP_POS_FRAMES));
+                // 原始帧
+                Mat srcFrame = new Mat();
+                // 处理后用于对比的帧
+                Mat comparFrame = new Mat();
+                // 二值化处理
+                Mat thresh = new Mat();
+                // 获取差值，存在diffFrame
+                Mat diffFrame = new Mat();
+                try {
+                    videoCapture.read(srcFrame);
+                    if (srcFrame.empty()) {
+                        log.info("|| ============= 视频解析完毕");
+                        break;
+                    }
+                    // 先将Mat存在Cache中
+                    frame_cache.add(srcFrame);
+                    if (flag) {
+                        // 如果flag表示当前帧可以直接压入视频
+                        videoWriter.write(srcFrame);
+                        log.info("{}帧压入视频", videoCapture.get(Videoio.CAP_PROP_POS_FRAMES));
+                        overFrameSize = overFrameSize == CACHE_FRAME_SIZE - 1 ? 0 : (overFrameSize + 1);
+                        if (overFrameSize == 0) {
+                            flag = false;
+                            videoWriter.release();
+                            videoWriter = new VideoWriter(desDir + "\\result-view-" + outNum++ + ".avi",
+                                    VideoWriter.fourcc('M', 'J', 'P', 'G'),
+                                    fps,
+                                    frameSize);
+                        }
+                        srcFrame.release();
+                        continue;
+                    }
+                    // 高斯滤波,尽量平滑，参数未知
+                    Imgproc.GaussianBlur(srcFrame, comparFrame, new Size(9, 9), 3, 3);
+                    if (modelFrame == null) {
+                        // 模板为空时，抽取第一幅为模板
+                        modelFrame = new Mat(comparFrame.size(), CvType.CV_8U);
+                        // 模板灰度化
+                        Imgproc.cvtColor(comparFrame, modelFrame, Imgproc.COLOR_RGB2GRAY);
+                    }
+                    // 比较帧灰度化
+                    Imgproc.cvtColor(comparFrame, comparFrame, Imgproc.COLOR_RGB2GRAY);
+                    Core.absdiff(comparFrame, modelFrame, diffFrame);
+                    // 阈值化还是啥的
+                    Imgproc.threshold(diffFrame, thresh, 64, 255, Imgproc.THRESH_BINARY);
+                    MatOfDouble matOfDouble = new MatOfDouble();
+                    Core.meanStdDev(diffFrame, new MatOfDouble(), matOfDouble);
+                    // 取差值大于25的,触发录制
+                    if (matOfDouble.toArray()[0] > 25) {
+                        List<Mat> mats = frame_cache.valuesAsList();
+                        log.info("{}帧发现大于25的运动", videoCapture.get(Videoio.CAP_PROP_POS_FRAMES));
+                        log.info("压入缓存中一共{}帧到视频", mats.size());
+                        // 先将cache的压入视频,带上了当前帧
+                        mats.forEach(videoWriter::write);
+                        // 清空
+                        frame_cache.clear();
+                        flag = true;
+                    }
+                }finally {
+                    comparFrame.release();
+                    diffFrame.release();
+                    thresh.release();
                 }
-                srcFrame.release();
-                continue;
             }
-            // 高斯滤波,尽量平滑，参数未知
-            Imgproc.GaussianBlur(srcFrame, comparFrame, new Size(9, 9), 3, 3);
-            if (modelFrame == null) {
-                // 模板为空时，抽取第一幅为模板
-                modelFrame = new Mat(comparFrame.size(), CvType.CV_8U);
-                // 模板灰度化
-                Imgproc.cvtColor(comparFrame, modelFrame, Imgproc.COLOR_RGB2GRAY);
-            }
-            // 比较帧灰度化
-            Imgproc.cvtColor(comparFrame, comparFrame, Imgproc.COLOR_RGB2GRAY);
-            // 获取差值，存在diffFrame
-            Mat diffFrame = new Mat();
-            Core.absdiff(comparFrame, modelFrame, diffFrame);
-            Mat thresh = new Mat();
-            // 阈值化还是啥的
-            Imgproc.threshold(diffFrame, thresh, 64, 255, Imgproc.THRESH_BINARY);
-            MatOfDouble matOfDouble = new MatOfDouble();
-            Core.meanStdDev(diffFrame, new MatOfDouble(), matOfDouble);
-            // 取差值大于25的,触发录制
-            if (matOfDouble.toArray()[0] > 25) {
-                List<Mat> mats = frame_cache.valuesAsList();
-                log.info("{}帧发现大于25的运动",videoCapture.get(Videoio.CAP_PROP_POS_FRAMES));
-                log.info("压入缓存中一共{}帧到视频",mats.size());
-                // 先将cache的压入视频,带上了当前帧
-                mats.forEach(videoWriter::write);
-                // 清空
-                frame_cache.clear();
-                flag = true;
-            }
-            comparFrame.release();
-            diffFrame.release();
-            thresh.release();
+        }finally {
+            videoCapture.release();
+            videoWriter.release();
+            frame_cache.clear();
+
         }
         new File(desDir+"\\result-view-"+ (outNum-1) + ".avi").deleteOnExit();
-        videoCapture.release();
-        videoWriter.release();
     }
 }

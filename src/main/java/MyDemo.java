@@ -30,8 +30,8 @@ public class MyDemo {
 
         // 指定视频并验证是否能打开
 //        VideoCapture videoCapture = new VideoCapture("D:\\result-view-1.avi");
-        VideoCapture videoCapture = new VideoCapture("D:\\street.mov");
-//        VideoCapture videoCapture = new VideoCapture("D:\\Encode_1080P_4_7.mp4");
+//        VideoCapture videoCapture = new VideoCapture("D:\\street.mov");
+        VideoCapture videoCapture = new VideoCapture("D:\\Encode_1080P_4_7.mp4");
         try {
             if (!videoCapture.isOpened()) {
                 log.info("视频无法打开");
@@ -49,7 +49,7 @@ public class MyDemo {
             log.info("|| ==================   fps:[{}]",fps);
             log.info("|| ==================   frameSize[ height:{},width:{}]",frameSize.height,frameSize.width);
             while (true) {
-                TimeUnit.SECONDS.sleep(1);
+//                TimeUnit.SECONDS.sleep(1);
                 // 读取当前帧到frame
                 videoCapture.read(srcFrame);
                 if (srcFrame.empty()) {
@@ -97,9 +97,9 @@ public class MyDemo {
                 // show the current frame and the fg masks
                 // 视频展示
                 HighGui.imshow("原视频：", srcFrame);
-//            HighGui.imshow("模板图片：", modelFrame);
-//            HighGui.imshow("差值视频：", diff);
-//            HighGui.imshow("差值视频阈值化：", thresh);
+            HighGui.imshow("模板图片：", modelFrame);
+            HighGui.imshow("差值视频：", diff);
+            HighGui.imshow("差值视频阈值化：", thresh);
                 // get the input from the keyboard
                 int keyboard = HighGui.waitKey(1);
                 if (keyboard == 'q' || keyboard == 27) {
