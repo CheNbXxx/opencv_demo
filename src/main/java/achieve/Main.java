@@ -18,7 +18,7 @@ import java.util.Properties;
 public class Main {
 
     public static void main(String[] args) throws Exception {
-        new Main().handle(new String[]{"D:\\videoHandle.properties"});
+        new Main().handle(args);
     }
 
     private void handle(String[] args) throws Exception {

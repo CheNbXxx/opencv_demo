@@ -78,8 +78,7 @@ public class DoVideo {
         // 加载dll文件
         String property = System.getProperty("user.dir");
         log.info(new File(property).getAbsolutePath());
-//        System.load(new File(property).getAbsolutePath()+"\\src\\main\\java\\lib\\opencv_java400.dll");
-        System.load(new File(property).getAbsolutePath()+"\\classes\\opencv_java400.dll");
+        System.load(new File(property).getAbsolutePath()+"\\opencv_java400.dll");
 
     }
 
@@ -116,7 +115,9 @@ public class DoVideo {
                     log.info("读取到:{}帧", frameIndex);
                     // 1. 均值模糊
                     Imgproc.blur(srcFrame, comparFrame, new Size(9, 9));
-                    HighGui.imshow("均值模糊后：", comparFrame);
+                    if(params.showVideo == 1) {
+                        HighGui.imshow("均值模糊后：", comparFrame);
+                    }
                     if (modelFrame == null) {
                         // 模板为空时，抽取第一幅为模板
                         modelFrame = new Mat(comparFrame.size(), CvType.CV_8U);
@@ -126,10 +127,11 @@ public class DoVideo {
                     // 2. 比较帧灰度化
                     Imgproc.cvtColor(comparFrame, comparFrame, Imgproc.COLOR_RGB2GRAY);
                     Core.absdiff(comparFrame, modelFrame, diffFrame);
-                    HighGui.imshow("差值视频阈值化：", diffFrame);
-                    int keyboard = HighGui.waitKey(1);
-                    if (keyboard == 'q' || keyboard == 27) {
-                        break;
+                    if(params.showVideo == 1) {
+                        int keyboard = HighGui.waitKey(1);
+                        if (keyboard == 'q' || keyboard == 27) {
+                            break;
+                        }
                     }
                     // 3. 二值化
                     Imgproc.threshold(diffFrame, thresh, 64, 255, Imgproc.THRESH_BINARY);
@@ -161,6 +163,8 @@ public class DoVideo {
             log.info("release VideoCapture");
             videoCapture.release();
         }
-        HighGui.waitKey();
+        if(params.showVideo == 1) {
+            HighGui.waitKey();
+        }
     }
 }

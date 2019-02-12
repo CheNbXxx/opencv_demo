@@ -1,5 +1,5 @@
 #### 视频中的运动截取
-
+jar包
 CMD输入以下指令运行：
 > java -jar VideoHandle-1.0-SNAPSHOT.jar [配置文件videoHandle.properties地址]
 

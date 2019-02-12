@@ -21,4 +21,6 @@ public class Params {
     String desFile = "D:/";
     /** 筛选的阈值*/
     Integer threshold = 25;
+    /** 是否播放跳帧视频 1播放 0不播放**/
+    Integer showVideo = 0;
 }
