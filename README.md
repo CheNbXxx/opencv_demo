@@ -1,4 +1,9 @@
+
 #### 视频中的运动截取
+
+- 上家公司的业务需要,Java跑opencv还是挺勉强的
+- 垃圾项目,不过好歹也有点心血
+
 jar包
 CMD输入以下指令运行：
 > java -jar VideoHandle-1.0-SNAPSHOT.jar [配置文件videoHandle.properties地址]
